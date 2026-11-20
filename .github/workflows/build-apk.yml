@@ -1,0 +1,70 @@
+name: Build Android APK (Rap Empire Beta)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build RapEmpireBeta.apk
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build web app (Vite)
+        run: npm run build
+
+      - name: Generate and sync Capacitor Android project
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+          node scripts/prepare-android.mjs
+
+      - name: Accept Android SDK licenses
+        run: |
+          if [ -n "$ANDROID_HOME" ] && [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+          fi
+
+      - name: Build Debug APK with Gradle
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Prepare downloadable APK
+        run: |
+          mkdir -p release-apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-apk/RapEmpireBeta.apk
+          ls -lh release-apk/RapEmpireBeta.apk
+
+      - name: Upload RapEmpireBeta.apk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RapEmpireBeta-APK
+          path: release-apk/RapEmpireBeta.apk
+          retention-days: 30

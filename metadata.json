@@ -1,0 +1,6 @@
+{
+  "name": "RAP EMPIRE 9.4",
+  "description": "Symulator życia i kariery rapera na polskiej scenie hip-hopowej — studio nagrań z beatmakerem, mapa 16 województw, 15 rywali NPC, beefy, freestyle, marka odzieżowa, wytwórnia i Gala Rap Awards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
